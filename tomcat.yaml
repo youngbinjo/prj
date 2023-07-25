@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prj-tomcat
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: prj-tomcat
+  name: deploy-tomcat
+spec:
+  selector:
+    matchLabels:
+      app: tomcat
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: tomcat
+    spec:
+      containers:
+      - name: tomcat-prj
+        image: 457017831224.dkr.ecr.ap-southeast-2.amazonaws.com/prj-tomcat:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tomcat-svc
+  labels:
+    run: tomcat
+  namespace: prj-tomcat
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: tomcat
+  type: NodePort
+  clusterIP: 172.20.255.172
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tomcat-hpa
+  namespace: prj-tomcat
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: deploy-tomcat
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 40
+

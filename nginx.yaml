@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prj-nginx
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: prj-nginx
+  name: deploy-nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx-prj
+        image: 457017831224.dkr.ecr.ap-southeast-2.amazonaws.com/prj-nginx:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+  labels:
+    run: nginx
+  namespace: prj-nginx
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/target-type: instance
+    service.beta.kubernetes.io/subnets: subnet-074b8aa69a1af4bb3, subnet-0b20931f4403cfb6a
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    app: nginx
+  type: LoadBalancer
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-hpa
+  namespace: prj-nginx
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: deploy-nginx
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 40
+
