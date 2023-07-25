@@ -57,6 +57,6 @@ spec:
     kind: Deployment
     name: deploy-tomcat
   minReplicas: 2
-  maxReplicas: 4
-  targetCPUUtilizationPercentage: 40
+  maxReplicas: 40
+  targetCPUUtilizationPercentage: 20
 
